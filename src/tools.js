@@ -18,7 +18,7 @@ const {
 } = require('./constants');
 
 async function enqueueListingsFromSection(results, requestQueue, minPrice, maxPrice) {
-    log.debug(`Listings section size: ${listings.length}`);
+    log.debug(`Listings section size: ${results.length}`);
     for (const { listing } of results) {
         await enqueueDetailLink(listing.id, requestQueue, minPrice, maxPrice);
     }
