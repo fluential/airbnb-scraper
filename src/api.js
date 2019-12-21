@@ -20,7 +20,7 @@ function buildListingUrl(location, priceMin = DEFAULT_MIN_PRICE, priceMax = DEFA
         queryString.checkout = checkOut;
     }
 
-    return `http://api.airbnb.com/v2/explore_tabs?${querystring.stringify(queryString)}`;
+    return `https://api.airbnb.com/v2/explore_tabs?${querystring.stringify(queryString)}`;
 }
 
 /**

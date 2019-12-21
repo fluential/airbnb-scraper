@@ -65,6 +65,7 @@ Apify.main(async () => {
                     response = await getData(attempt + 1);
                 }
             }
+
             return response.body;
         };
 
