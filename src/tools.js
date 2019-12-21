@@ -5,7 +5,7 @@ const moment = require('moment');
 const currencies = require('./currencyCodes.json');
 
 const { utils: { log } } = Apify;
-const { getHomeListings, callForReviews } = require('./api');
+const { buildListingUrl, getHomeListings, callForReviews } = require('./api');
 const {
     HEADERS,
     HISTOGRAM_ITEMS_COUNT,
@@ -46,15 +46,23 @@ async function getListingsSection(locationId, minPrice, maxPrice, requestQueue, 
     const pageSize = MAX_LIMIT;
     let offset = 0;
     let data = await getHomeListings(locationId, getRequest, minPrice, maxPrice, pageSize, offset, checkIn, checkOut);
-    const numberOfHomes = data.metadata.listings_count;
+    const { pagination_metadata, sections, home_tab_metadata } = data.explore_tabs[0];
+    const { listings } = sections[0];
+    const numberOfHomes = home_tab_metadata.listings_count;
     const numberOfFetches = numberOfHomes / pageSize;
-    await enqueueListingsFromSection(data.search_results, requestQueue, minPrice, maxPrice);
+    const hasNextPage = pagination_metadata.has_next_page;
+
+    if (listings) {
+        await enqueueListingsFromSection(listings, requestQueue, minPrice, maxPrice);
+    }
 
     for (let i = 0; i < numberOfFetches; i++) {
         offset += pageSize;
         await randomDelay();
         data = await getHomeListings(locationId, getRequest, minPrice, maxPrice, pageSize, offset, checkIn, checkOut);
-        await enqueueListingsFromSection(data.search_results, requestQueue, minPrice, maxPrice);
+        if (listings) {
+            await enqueueListingsFromSection(listings, requestQueue, minPrice, maxPrice);
+        }
     }
 }
 
@@ -62,24 +70,10 @@ async function addListings(query, requestQueue, minPrice = DEFAULT_MIN_PRICE, ma
     const intervalSize = maxPrice / HISTOGRAM_ITEMS_COUNT;
     let pivotStart = minPrice;
     let pivotEnd = intervalSize;
+
     for (let i = 0; i < HISTOGRAM_ITEMS_COUNT; i++) {
-        const queryString = {
-            location: query,
-            price_min: pivotStart,
-            price_max: pivotEnd,
-            _limit: MIN_LIMIT,
-        };
-
-        if (checkIn) {
-            queryString.checkin = checkIn;
-        }
-
-        if (checkOut) {
-            queryString.checkout = checkOut;
-        }
-
-        const url = `https://api.airbnb.com/v2/search_results?${querystring.stringify(queryString)}`;
-
+        const url = buildListingUrl(query, pivotStart, pivotEnd, MIN_LIMIT, 0, checkIn, checkOut);
+        
         log.info(`Adding initial pivoting url: ${url}`);
 
         await requestQueue.addRequest({
@@ -100,7 +94,7 @@ async function addListings(query, requestQueue, minPrice = DEFAULT_MIN_PRICE, ma
 async function pivot(request, requestQueue, getRequest, checkIn, checkOut) {
     const { pivotStart, pivotEnd, query } = request.userData;
     const data = await getRequest(request.url);
-    const listingCount = data.metadata.listings_count;
+    const listingCount = data.explore_tabs[0].home_tab_metadata.listings_count;
 
     log.debug(`Listings found: ${listingCount}`);
 
@@ -110,22 +104,8 @@ async function pivot(request, requestQueue, getRequest, checkIn, checkOut) {
 
     if (listingCount > 1000 && (pivotEnd - pivotStart > 1)) {
         const intervalMiddle = Math.ceil((pivotEnd + pivotStart) / 2);
-        const firstHalfQuery = {
-            location: query,
-            price_min: pivotStart,
-            price_max: intervalMiddle,
-            _limit: MIN_LIMIT,
-        };
 
-        if (checkIn) {
-            firstHalfQuery.checkin = checkIn;
-        }
-
-        if (checkOut) {
-            firstHalfQuery.checkout = checkOut;
-        }
-
-        const firstHalfUrl = `http://api.airbnb.com/v2/search_results?${querystring.stringify(firstHalfQuery)}`;
+        const firstHalfUrl = buildListingUrl(query, pivotStart, intervalMiddle, MIN_LIMIT, 0, checkIn, checkOut);
         log.debug(`First half url: ${firstHalfUrl}`);
 
         await requestQueue.addRequest({
@@ -138,22 +118,7 @@ async function pivot(request, requestQueue, getRequest, checkIn, checkOut) {
             },
         });
 
-        const secondHalfQuery = {
-            location: query,
-            price_min: intervalMiddle,
-            price_max: pivotEnd,
-            _limit: MIN_LIMIT,
-        };
-
-        if (checkIn) {
-            secondHalfQuery.checkin = checkIn;
-        }
-
-        if (checkOut) {
-            secondHalfQuery.checkout = checkOut;
-        }
-
-        const secondHalfUrl = `http://api.airbnb.com/v2/search_results?${querystring.stringify(secondHalfQuery)}`;
+        const secondHalfUrl = buildListingUrl(query, intervalMiddle, pivotEnd, MIN_LIMIT, 0, checkIn, checkOut);
         log.debug(`Second half url: ${secondHalfUrl}`);
 
         await requestQueue.addRequest({

@@ -1,6 +1,28 @@
 const querystring = require('querystring');
 const { DEFAULT_MIN_PRICE, DEFAULT_MAX_PRICE } = require('./constants');
 
+
+function buildListingUrl(location, priceMin = DEFAULT_MIN_PRICE, priceMax = DEFAULT_MAX_PRICE, limit = 20, offset = 0, checkIn, checkOut) {
+    const queryString = {
+        query: location,
+        price_min: priceMin,
+        price_max: priceMax,
+        items_per_grid: limit,
+        items_offset: offset,
+        "refinement_paths[]": '/homes',
+    };
+
+    if (checkIn) {
+        queryString.checkin = checkIn;
+    }
+
+    if (checkOut) {
+        queryString.checkout = checkOut;
+    }
+
+    return `http://api.airbnb.com/v2/explore_tabs?${querystring.stringify(queryString)}`;
+}
+
 /**
  *
  * @param {String} location
@@ -14,26 +36,9 @@ const { DEFAULT_MIN_PRICE, DEFAULT_MAX_PRICE } = require('./constants');
  * @return {Promise}
  */
 function getHomeListings(location, getRequest, priceMin = DEFAULT_MIN_PRICE, priceMax = DEFAULT_MAX_PRICE, limit = 20, offset = 0, checkIn, checkOut) {
-    const queryString = {
-        location,
-        price_min: priceMin,
-        price_max: priceMax,
-        _limit: limit,
-        _offset: offset,
+   const url = buildListingUrl(location, priceMin, priceMax, limit, offset, checkIn, checkOut);
 
-    };
-
-    if (checkIn) {
-        queryString.checkin = checkIn;
-    }
-
-    if (checkOut) {
-        queryString.checkout = checkOut;
-    }
-
-    return getRequest(
-        `http://api.airbnb.com/v2/search_results?${querystring.stringify(queryString)}`,
-    );
+    return getRequest(url);
 }
 
 /**
@@ -61,4 +66,5 @@ function callForReviews(listingId, getRequest, limit = 50, offset = 0) {
 module.exports = {
     getHomeListings,
     callForReviews,
+    buildListingUrl,
 };
