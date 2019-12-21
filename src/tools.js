@@ -1,11 +1,10 @@
 const Apify = require('apify');
 const camelcaseKeysRecursive = require('camelcase-keys-recursive');
-const querystring = require('querystring');
 const moment = require('moment');
 const currencies = require('./currencyCodes.json');
 
 const { utils: { log } } = Apify;
-log.setLevel(log.LEVELS.DEBUG);
+// log.setLevel(log.LEVELS.DEBUG);
 const { buildListingUrl, getHomeListings, callForReviews } = require('./api');
 const {
     HEADERS,
@@ -48,9 +47,11 @@ async function getListingsSection(locationId, minPrice, maxPrice, requestQueue, 
     const pageSize = MAX_LIMIT;
     let offset = 0;
     let data = await getHomeListings(locationId, getRequest, minPrice, maxPrice, pageSize, offset, checkIn, checkOut);
+    // eslint-disable-next-line camelcase
     const { pagination_metadata, sections, home_tab_metadata } = data.explore_tabs[0];
     let listings;
     for (const section of sections) {
+        // eslint-disable-next-line prefer-destructuring
         listings = section.listings;
         if (listings) {
             break;
@@ -60,7 +61,8 @@ async function getListingsSection(locationId, minPrice, maxPrice, requestQueue, 
     const numberOfFetches = Math.ceil(numberOfHomes / pageSize);
     const hasNextPage = pagination_metadata.has_next_page;
 
-    log.debug(`Listings metadata: listings: ${listings}, hasNextPage: ${hasNextPage}, numberOfHomes: ${numberOfHomes}, numberOfFetches: ${numberOfFetches}`);
+    log.debug(`Listings metadata: listings: ${listings}, hasNextPage: ${hasNextPage}, 
+                numberOfHomes: ${numberOfHomes}, numberOfFetches: ${numberOfFetches}`);
 
     if (listings) {
         await enqueueListingsFromSection(listings, requestQueue, minPrice, maxPrice);
@@ -83,7 +85,7 @@ async function addListings(query, requestQueue, minPrice = DEFAULT_MIN_PRICE, ma
 
     for (let i = 0; i < HISTOGRAM_ITEMS_COUNT; i++) {
         const url = buildListingUrl(query, pivotStart, pivotEnd, MIN_LIMIT, 0, checkIn, checkOut);
-        
+
         log.info(`Adding initial pivoting url: ${url}`);
 
         await requestQueue.addRequest({

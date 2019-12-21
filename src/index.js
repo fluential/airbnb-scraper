@@ -6,7 +6,6 @@ const ProxyAgent = require('proxy-agent');
 const { utils: { log } } = Apify;
 const { addListings, pivot, getReviews, validateInput, enqueueDetailLink } = require('./tools');
 
-
 Apify.main(async () => {
     const input = await Apify.getInput();
 

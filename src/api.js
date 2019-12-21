@@ -9,7 +9,7 @@ function buildListingUrl(location, priceMin = DEFAULT_MIN_PRICE, priceMax = DEFA
         price_max: priceMax,
         items_per_grid: limit,
         items_offset: offset,
-        "refinement_paths[]": '/homes',
+        'refinement_paths[]': '/homes',
     };
 
     if (checkIn) {
@@ -35,9 +35,9 @@ function buildListingUrl(location, priceMin = DEFAULT_MIN_PRICE, priceMax = DEFA
  * @param {string} checkOut
  * @return {Promise}
  */
-function getHomeListings(location, getRequest, priceMin = DEFAULT_MIN_PRICE, priceMax = DEFAULT_MAX_PRICE, limit = 20, offset = 0, checkIn, checkOut) {
-   const url = buildListingUrl(location, priceMin, priceMax, limit, offset, checkIn, checkOut);
-
+function getHomeListings(location, getRequest, priceMin = DEFAULT_MIN_PRICE, priceMax = DEFAULT_MAX_PRICE,
+    limit = 20, offset = 0, checkIn, checkOut) {
+    const url = buildListingUrl(location, priceMin, priceMax, limit, offset, checkIn, checkOut);
     return getRequest(url);
 }
 
