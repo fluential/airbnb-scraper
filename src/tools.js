@@ -49,12 +49,18 @@ async function getListingsSection(locationId, minPrice, maxPrice, requestQueue, 
     let offset = 0;
     let data = await getHomeListings(locationId, getRequest, minPrice, maxPrice, pageSize, offset, checkIn, checkOut);
     const { pagination_metadata, sections, home_tab_metadata } = data.explore_tabs[0];
-    const { listings } = sections[0];
+    let listings;
+    for (const section of sections) {
+        listings = section.listings;
+        if (listings) {
+            break;
+        }
+    }
     const numberOfHomes = home_tab_metadata.listings_count;
-    const numberOfFetches = numberOfHomes / pageSize;
+    const numberOfFetches = Math.ceil(numberOfHomes / pageSize);
     const hasNextPage = pagination_metadata.has_next_page;
 
-    log.debug(`Listings metadata: hasNextPage: ${hasNextPage}, numberOfHomes: ${numberOfHomes}, numberOfFetches: ${numberOfFetches}`);
+    log.debug(`Listings metadata: listings: ${listings}, hasNextPage: ${hasNextPage}, numberOfHomes: ${numberOfHomes}, numberOfFetches: ${numberOfFetches}`);
 
     if (listings) {
         await enqueueListingsFromSection(listings, requestQueue, minPrice, maxPrice);
