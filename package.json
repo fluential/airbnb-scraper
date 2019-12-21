@@ -5,14 +5,14 @@
 	"main": "main.js",
 	"dependencies": {
 		"apify": "^0.17.0",
-		"camelcase-keys-recursive": "^0.8.2",
-		"got": "^9.6.0",
+		"camelcase-keys-recursive": "^0.8.3",
+		"got": "^10.1.0",
 		"moment": "^2.24.0",
-		"proxy-agent": "^3.1.0"
+		"proxy-agent": "^3.1.1"
 	},
 	"devDependencies": {
 		"@apify/eslint-config": "0.0.3",
-		"eslint": "^6.7.2"
+		"eslint": "^6.8.0"
 	},
 	"scripts": {
 		"start": "node main.js",
