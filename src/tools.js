@@ -18,6 +18,7 @@ const {
 } = require('./constants');
 
 async function enqueueListingsFromSection(results, requestQueue, minPrice, maxPrice) {
+    log.debug(`Listings section size: ${listings.length}`);
     for (const { listing } of results) {
         await enqueueDetailLink(listing.id, requestQueue, minPrice, maxPrice);
     }
@@ -52,6 +53,8 @@ async function getListingsSection(locationId, minPrice, maxPrice, requestQueue, 
     const numberOfHomes = home_tab_metadata.listings_count;
     const numberOfFetches = numberOfHomes / pageSize;
     const hasNextPage = pagination_metadata.has_next_page;
+
+    log.debug(`Listings metadata: hasNextPage: ${hasNextPage}, numberOfHomes: ${numberOfHomes}, numberOfFetches: ${numberOfFetches}`);
 
     if (listings) {
         await enqueueListingsFromSection(listings, requestQueue, minPrice, maxPrice);
