@@ -359,7 +359,8 @@
       "type": "object",
       "description": "Optionally use Apify Proxy",
       "prefill": {
-        "useApifyProxy": true
+        "useApifyProxy": true,
+        "apifyProxyGroups": ["SHADER"]
       },
       "default": {
         "useApifyProxy": true
