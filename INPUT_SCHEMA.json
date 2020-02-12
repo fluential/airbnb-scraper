@@ -11,6 +11,42 @@
       "default": "Sacramento",
       "editor": "textfield"
     },
+    "startUrls": {
+      "title": "Start URLs",
+      "type": "array",
+      "description": "Urls of Airbnb details (not search urls), when set the actor will ignore locationQuery and will return results only for these listings",
+      "editor": "requestListSources"
+    },    
+    "simple": {
+      "title": "Extract main listing information only (no detail)",
+      "type": "boolean",
+      "description": "The crawler will get only the main listing information and skip other details.",
+      "default": true
+    },
+    "includeReviews": {
+      "title": "Include reviews",
+      "type": "boolean",
+      "description": "If checked results includes reviews data",
+      "default": true
+    },
+    "maxReviews": {
+      "title": "Maximum reviews",
+      "type": "integer",
+      "description": "Amount of reviews to be scraped for each listing.",
+      "default": 1000
+    },
+    "minPrice": {
+      "title": "Minimum price",
+      "type": "integer",
+      "description": "Sets filter min_price (per night) to the search query.",
+      "default": 0
+    },
+    "maxPrice": {
+      "title": "Maximum price",
+      "type": "integer",
+      "description": "Sets filter max_price (per night) to the search query.",
+      "default": 100000
+    },
     "currency": {
       "title": "Currency",
       "type": "string",
@@ -317,31 +353,7 @@
         "ZWR"
       ],
       "default": "CZK"
-    },
-    "includeReviews": {
-      "title": "Include reviews",
-      "type": "boolean",
-      "description": "If checked results includes reviews data",
-      "default": true
-    },
-    "maxReviews": {
-      "title": "Maximum reviews",
-      "type": "integer",
-      "description": "Amount of reviews to be scraped for each listing.",
-      "default": 1000
-    },
-    "priceMin": {
-      "title": "Minimum price",
-      "type": "integer",
-      "description": "Sets filter min_price to the search query.",
-      "default": 0
-    },
-    "priceMax": {
-      "title": "Maximum price",
-      "type": "integer",
-      "description": "Sets filter max_price to the search query.",
-      "default": 100000
-    },
+    },    
     "checkIn": {
       "title": "Checkin date",
       "type": "string",
@@ -367,11 +379,12 @@
       },
       "editor": "proxy"
     },
-    "startUrls": {
-      "title": "Start URLs",
-      "type": "array",
-      "description": "Urls of Airbnb details, when set the actor will ignore locationQuery and will return results only for these listings",
-      "editor": "requestListSources"
+    "maxConcurrency": {
+      "title": "Max concurrency",
+      "type": "integer",
+      "description": "Defines how many pages can be processed by the scraper in parallel. The scraper automatically increases and decreases concurrency based on available system resources. Use this option to set a hard limit.",
+      "minimum": 1,
+      "default": 50
     }
   },
   "required": [

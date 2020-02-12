@@ -6,6 +6,8 @@ You can get all of the basic pieces of information about the listing and all of 
 The actor was meant to be used for extracting all listings for a particular location.
 You can specify the price range, checkin and checkout dates. 
 Normally Airbnb provides only the first 300 results on their website and limits the API to 1000 results, but with our Airbnb Scraper you can access all of them.
+Because we divide the location into many smaller areas and also the price range into many smaller ranges to search, you will always see a lot of crawling pages comparing to the results and the run of this actor always take long time to complete. Please be patient to wait.
+
 The actor can be used for various use cases. 
 You can monitor amount of Airbnb listings around your listing and get the newest prices updates and follow trends for the given location.
 Another possible use case is to analyze reviews using sentiment analysis and find the best location in town.

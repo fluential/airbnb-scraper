@@ -7,7 +7,6 @@ const { utils: { log } } = Apify;
 // log.setLevel(log.LEVELS.DEBUG);
 const { buildListingUrl, getHomeListings, callForReviews } = require('./api');
 const {
-    HEADERS,
     HISTOGRAM_ITEMS_COUNT,
     DEFAULT_MAX_PRICE,
     DEFAULT_MIN_PRICE,
@@ -17,7 +16,7 @@ const {
 } = require('./constants');
 
 async function enqueueListingsFromSection(results, requestQueue, minPrice, maxPrice) {
-    log.debug(`Listings section size: ${results.length}`);
+    log.info(`Listings section size: ${results.length}`);
     for (const { listing } of results) {
         await enqueueDetailLink(listing.id, requestQueue, minPrice, maxPrice);
     }
@@ -27,7 +26,6 @@ function enqueueDetailLink(id, requestQueue, minPrice, maxPrice) {
     log.debug(`Enquing home with id: ${id}`);
     return requestQueue.addRequest({
         url: `https://api.airbnb.com/v2/pdp_listing_details/${id}?_format=for_native`,
-        headers: HEADERS,
         userData: {
             isHomeDetail: true,
             minPrice,
@@ -43,38 +41,59 @@ function randomDelay(minimum = 100, maximum = 200) {
     return Apify.utils.sleep(Math.floor(Math.random() * (max - min + 1)) + min);
 }
 
+async function getSearchLocation(locationId, minPrice, maxPrice, checkIn, checkOut, getRequest) {
+    const pageSize = MAX_LIMIT;
+    const offset = 0;
+    const data = await getHomeListings(locationId, getRequest, minPrice, maxPrice, pageSize, offset, checkIn, checkOut);
+    const { query } = data.metadata;
+    const { home_tab_metadata: { search } } = data.explore_tabs[0];
+    log.info(`Currency query: ${search.native_currency}`);
+
+    return query;
+}
+
+function findListings(sections) {
+    let listings;
+
+    for (let index = 0; index < sections.length; index++) {
+        const section = sections[index];
+
+        if (section.result_type === 'listings' && section.listings && section.listings.length > 0) {
+            // eslint-disable-next-line prefer-destructuring
+            listings = section.listings;
+            break;
+        }
+    }
+
+    return listings;
+}
+
 async function getListingsSection(locationId, minPrice, maxPrice, requestQueue, getRequest, checkIn, checkOut) {
     const pageSize = MAX_LIMIT;
     let offset = 0;
     let data = await getHomeListings(locationId, getRequest, minPrice, maxPrice, pageSize, offset, checkIn, checkOut);
     // eslint-disable-next-line camelcase
-    const { pagination_metadata, sections, home_tab_metadata } = data.explore_tabs[0];
-    let listings;
-    for (const section of sections) {
-        // eslint-disable-next-line prefer-destructuring
-        listings = section.listings;
-        if (listings) {
-            break;
-        }
-    }
-    const numberOfHomes = home_tab_metadata.listings_count;
-    const numberOfFetches = Math.ceil(numberOfHomes / pageSize);
-    const hasNextPage = pagination_metadata.has_next_page;
-
-    log.debug(`Listings metadata: listings: ${listings}, hasNextPage: ${hasNextPage}, 
-                numberOfHomes: ${numberOfHomes}, numberOfFetches: ${numberOfFetches}`);
-
+    const { pagination_metadata, sections } = data.explore_tabs[0];
+    let listings = findListings(sections);
     if (listings) {
         await enqueueListingsFromSection(listings, requestQueue, minPrice, maxPrice);
     }
 
-    for (let i = 0; i < numberOfFetches; i++) {
+    let hasNextPage = pagination_metadata.has_next_page;
+    // log.info(`Listings metadata: listings: ${listings.length}, hasNextPage: ${hasNextPage}, localized_listing_count: ${localized_listing_count}`);
+
+    while (hasNextPage) {
         offset += pageSize;
         await randomDelay();
         data = await getHomeListings(locationId, getRequest, minPrice, maxPrice, pageSize, offset, checkIn, checkOut);
+        // eslint-disable-next-line camelcase
+        const { pagination_metadata, sections } = data.explore_tabs[0];
+        listings = findListings(sections);
         if (listings) {
             await enqueueListingsFromSection(listings, requestQueue, minPrice, maxPrice);
         }
+
+        hasNextPage = pagination_metadata.has_next_page;
     }
 }
 
@@ -85,7 +104,6 @@ async function addListings(query, requestQueue, minPrice = DEFAULT_MIN_PRICE, ma
 
     for (let i = 0; i < HISTOGRAM_ITEMS_COUNT; i++) {
         const url = buildListingUrl(query, pivotStart, pivotEnd, MIN_LIMIT, 0, checkIn, checkOut);
-
         log.info(`Adding initial pivoting url: ${url}`);
 
         await requestQueue.addRequest({
@@ -106,7 +124,23 @@ async function addListings(query, requestQueue, minPrice = DEFAULT_MIN_PRICE, ma
 async function pivot(request, requestQueue, getRequest, checkIn, checkOut) {
     const { pivotStart, pivotEnd, query } = request.userData;
     const data = await getRequest(request.url);
-    const listingCount = data.explore_tabs[0].home_tab_metadata.listings_count;
+    let listingCount = data.explore_tabs[0].home_tab_metadata.listings_count;
+    if (listingCount === 0) {
+        // eslint-disable-next-line camelcase
+        const { sections } = data.explore_tabs[0];
+        for (const section of sections) {
+            // eslint-disable-next-line prefer-destructuring
+            const listings = section.listings;
+            listingCount = section.localized_listing_count;
+
+            if (listings) {
+                if (listingCount === 0) {
+                    listingCount = listings.length;
+                }
+                break;
+            }
+        }
+    }
 
     log.debug(`Listings found: ${listingCount}`);
 
@@ -222,4 +256,5 @@ module.exports = {
     getReviews,
     validateInput,
     enqueueDetailLink,
+    getSearchLocation,
 };
