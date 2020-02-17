@@ -100,7 +100,7 @@ async function getListingsSection(locationId, minPrice, maxPrice, requestQueue, 
 async function addListings(query, requestQueue, minPrice = DEFAULT_MIN_PRICE, maxPrice = DEFAULT_MAX_PRICE, checkIn, checkOut) {
     const intervalSize = maxPrice / HISTOGRAM_ITEMS_COUNT;
     let pivotStart = minPrice;
-    let pivotEnd = intervalSize;
+    let pivotEnd = pivotStart+intervalSize;
 
     for (let i = 0; i < HISTOGRAM_ITEMS_COUNT; i++) {
         const url = buildListingUrl(query, pivotStart, pivotEnd, MIN_LIMIT, 0, checkIn, checkOut);
