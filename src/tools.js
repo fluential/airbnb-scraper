@@ -4,7 +4,8 @@ const moment = require('moment');
 const currencies = require('./currencyCodes.json');
 
 const { utils: { log } } = Apify;
-// log.setLevel(log.LEVELS.DEBUG);
+log.setLevel(log.LEVELS.DEBUG);
+
 const { buildListingUrl, getHomeListings, callForReviews } = require('./api');
 const {
     HISTOGRAM_ITEMS_COUNT,
