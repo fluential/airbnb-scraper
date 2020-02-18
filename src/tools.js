@@ -3,7 +3,9 @@ const camelcaseKeysRecursive = require('camelcase-keys-recursive');
 const moment = require('moment');
 const currencies = require('./currencyCodes.json');
 
-const { utils: { log } } = Apify;
+//const { utils: { log } } = Apify;
+const { log } = Apify.utils;
+
 log.setLevel(log.LEVELS.DEBUG);
 
 const { buildListingUrl, getHomeListings, callForReviews } = require('./api');
